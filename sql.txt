@@ -1,0 +1,20 @@
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    username TEXT,
+    password TEXT
+);
+
+CREATE OR REPLACE FUNCTION verify_user(user_name TEXT, pwd TEXT)
+RETURNS INTEGER AS $$
+DECLARE
+    verified INTEGER;
+BEGIN
+    SELECT 1 INTO verified FROM users
+    WHERE username = user_name
+    AND password = crypt(pwd, password);
+
+    RETURN COALESCE(verified, 0);
+END;
+$$ LANGUAGE plpgsql;
+
+GRANT EXECUTE ON FUNCTION verify_user(TEXT, TEXT) TO PUBLIC;

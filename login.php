@@ -1,5 +1,6 @@
 <?php
-	session_start();
+session_start();
+	//Enter own values for $dbHost etc.
 	$conn = pg_connect("host=$dbHost port=$dbPort dbname=$dbName user=$dbUser password=$dbPassword");
 	
 
