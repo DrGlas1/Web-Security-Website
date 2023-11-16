@@ -4,7 +4,7 @@ CREATE TABLE users (
     password TEXT
 );
 
-CREATE EXTENSION pgcrypt;
+CREATE EXTENSION pgcrypto;
 
 CREATE OR REPLACE FUNCTION verify_user(user_name TEXT, pwd TEXT)
 RETURNS INTEGER AS $$
