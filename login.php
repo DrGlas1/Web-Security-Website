@@ -1,7 +1,7 @@
 <?php
 session_start();
 	//Enter own values for $dbHost etc.
-	$conn = pg_connect("host=$dbHost port=$dbPort dbname=$dbName user=$dbUser password=$dbPassword");
+		$conn = pg_connect("host=$dbHost port=$dbPort dbname=$dbName user=$dbUser password=$dbPassword");
 	
 
 	$authenticated = false;
@@ -24,6 +24,12 @@ session_start();
 		if(!$authenticated) {
 			echo 'Not valid';	
 		} else {
+			$cart = [
+				"Nötfärs 500g" => ["quantity" => 2, "image_url" => "https://res.cloudinary.com/coopsverige/images/e_sharpen,f_auto,fl_clip,fl_progressive,q_90,c_lpad,g_center,h_330,w_330/v1614683461/423522/N%C3%B6tf%C3%A4rs%2012%25.jpg"],
+				"Potatis" => ["quantity" => 1, "image_url" => "https://www.hermelins.se/app/uploads/2018/10/hermelins-potatis.jpg"]
+				// Add more items as needed
+			];
+			$_SESSION["cart"] = $cart;
 			header('location:landing_page.php');
 		}
 	} 
