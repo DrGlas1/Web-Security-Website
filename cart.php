@@ -43,7 +43,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($loggedIn) {
             if (!empty($cart)) {
-                // Display the items in the cart
                 echo '<h1>Your Shopping Cart:</h1>';
                 echo '<ul>';
                 foreach ($cart as $item => $itemDetails) {
@@ -60,13 +59,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 echo '</ul>';
         
-                // Add a "Finish Purchase" button
-                echo '<button onclick="finishPurchase()">Finish Purchase</button>';
+                echo '<button onclick="finishPurchase()">Checkout</button>';
         
-                // Add a "Back to Shop" button
-                echo '<button onclick="backToShop()">Back to Shop</button>';
+                echo '<button onclick="backToShop()">Back to landing page</button>';
             } else {
-                // Display "empty cart" message
                 echo '<p>Your cart is empty.</p>';
             }
         } else {
