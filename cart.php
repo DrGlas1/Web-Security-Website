@@ -35,8 +35,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
     <body>
     <?php
-        session_start();
-
         $loggedIn = isset($_SESSION['id']) && !empty($_SESSION['id']);
 
         $cart = $_SESSION["cart"];
