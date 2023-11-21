@@ -6,3 +6,5 @@ En captcha för stoppa bottar? eller bara någon limit på login attempts stoppa
 User permissions
 Password reqs
 Inge echoing som är sårbarhet
+
+

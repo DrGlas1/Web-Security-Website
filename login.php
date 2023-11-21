@@ -1,24 +1,45 @@
 <?php
 session_start();
+
 	//Enter own values for $dbHost etc.
 		$conn = pg_connect("host=$dbHost port=$dbPort dbname=$dbName user=$dbUser password=$dbPassword");
-	
-
 	$authenticated = false;
-	if(isset($_POST['verify']) && $_POST['verify'] =='Verify') {
+	
+	
+function handleLogin($conn, $user, $pwd) {
+	$query = 'SELECT id, password FROM users WHERE username = $1';
+	$res = pg_query_params($conn, $query, array($user));
+	$result = pg_fetch_object($res);
 
+	if ($result) {
+			$authenticated = password_verify($pwd, $result->password);
+			if ($authenticated) {
+					$_SESSION['id'] = $result->id; // Adjust the field names as needed
+					echo 'Login successful!';
+			}
+			else {
+				echo 'Invalid password!';
+			}
+	}     else {
+		echo 'User not found!';
+	}    
+	return $authenticated;
+}
+
+function handleRegistration($conn, $reg_user, $reg_pwd) {
+	// Hash the password using Bcrypt
+	$hashed_password = password_hash($reg_pwd, PASSWORD_BCRYPT);
+	// Insert the user into the database with the hashed password
+	$query = 'INSERT INTO users (username, password) VALUES ($1, $2)';
+	pg_query_params($conn, $query, array($reg_user, $hashed_password));
+}
+	if(isset($_POST['verify']) && $_POST['verify'] =='Verify') {
 		if($conn) {
 			$user = $_POST['user'];
 			$pwd = $_POST['pwd'];
-
-			$query = 'select * from verify($1, $2)';
-			$res = pg_query_params($conn, $query, array($user, $pwd));
-			$result = pg_fetch_object($res);
-			if ($result) {
-				$authenticated = $result->verify!=0;
-				$_SESSION['id'] = $result->verify;
-			}
-
+			$user = pg_escape_string($user);
+			$pwd = pg_escape_string($pwd);
+			$authenticated = handleLogin($conn, $user, $pwd);
 		}
 
 		if(!$authenticated) {
@@ -37,8 +58,10 @@ session_start();
 		if($conn) {
 			$reg_user = $_POST['reg_user'];
 			$reg_pwd = $_POST['reg_pwd'];
-			$query = 'insert into users (username, password) values ($1, crypt($2, gen_salt(\'bf\')))';
-			pg_query_params($conn, $query, array($reg_user, $reg_pwd));
+			//SQL protection
+			$reg_user = pg_escape_string($reg_user);
+			$reg_pwd = pg_escape_string($reg_pwd);
+			handleRegistration($conn, $reg_user, $reg_pwd);
 		}
 	}
 ?>
