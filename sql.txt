@@ -3,6 +3,7 @@ CREATE TABLE users (
     username TEXT,
     password TEXT
 );
+ALTER TABLE users ADD COLUMN salt VARCHAR(44);
 
 CREATE EXTENSION pgcrypto;
 
