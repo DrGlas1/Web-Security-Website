@@ -3,22 +3,12 @@
 //Make a config file for you database
 include('dbconfig.php');
 session_start();
-<<<<<<< HEAD
-	//Enter own values for $dbHost etc.
-  $dbHost="localhost";
-  $dbPort="5432";
-  $dbName="postgres";
-  $dbUser="postgres";
-  $dbPassword="lusql";
-	$conn = pg_connect("host=$dbHost port=$dbPort dbname=$dbName user=$dbUser password=$dbPassword");
-=======
 //Protects against Cross-Site Request Forgery (CSRF)
 	$csrfToken = bin2hex(random_bytes(32));
 	$_SESSION['csrf_token'] = $csrfToken;
 	$conn = pg_connect("host={$dbConfig['host']} port={$dbConfig['port']} dbname={$dbConfig['dbname']} user={$dbConfig['user']} password={$dbConfig['password']}");
 	$authenticated = false;
 
->>>>>>> main
 	
 function handleLogin($conn, $user, $pwd) {
 	$query = 'SELECT id, password FROM users WHERE username = $1';
