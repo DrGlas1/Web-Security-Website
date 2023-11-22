@@ -1,0 +1,10 @@
+LOGIN page
+SQL injection
+Password hashing dont use plain passwords
+Använd HTTPS så att våran connection är säker eller TLS?
+En captcha för stoppa bottar? eller bara någon limit på login attempts stoppa brute force.
+User permissions
+Password reqs
+Inge echoing som är sårbarhet
+
+
