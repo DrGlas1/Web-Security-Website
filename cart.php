@@ -35,7 +35,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 </head>
     <body>
     <?php
-        session_start();
+      //  session_start(); //Got error with this enabled
 
         $loggedIn = isset($_SESSION['id']) && !empty($_SESSION['id']);
 
@@ -93,7 +93,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             var cartItemElement = document.getElementById('cart-item-' + item);
             cartItemElement.style.display = 'none';
 
-            updateCart(item, 0); // Set quantity to 0 for removal
+            updateCart(item, 0);
         }
 
         function updateCart(item, quantity) {

@@ -8,3 +8,8 @@ Password reqs
 Inge echoing som är sårbarhet
 
 
+TODO
+Cookies för att hålla folk inloggade
+captcha med max attempts för att stoppa brute force
+hash med salt för att stoppa rainbow
+
