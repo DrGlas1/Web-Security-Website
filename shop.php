@@ -6,10 +6,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $cart = $_SESSION["cart"];
 
-    // if (array_key_exists($itemName, $cart)) {
-    //     $cart[$itemName]['quantity']++;
-    //     echo $cart[$itemName]['quantity'];
-    // }
     if (array_key_exists($itemName, $inventory)) {
         if (array_key_exists($itemName, $cart)) {
             $cart[$itemName]['quantity']++;
@@ -44,19 +40,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         echo '<td>' . $item . '</td>';
         echo '<td>' . $details['price'] . ' kr</td>';
         echo '<td><img src="' . $details['image_url'] . '" alt="' . $item . '" height="100"></td>';
-        echo '<td><button onclick="increaseQuantity(\'' . $item . '\')">Add to cart</button></td>';
+        echo '<td><button onclick="addToCart(\'' . $item . '\')">Add to cart</button></td>';
     }
 
     echo '</table>';
     echo '<br><a href="cart.php"><button>Go to Cart</button></a>';
 ?>
 <script>
-    function increaseQuantity(itemName) {
+    function addToCart(itemName) {
         var xhr = new XMLHttpRequest();
         xhr.onreadystatechange = function() {
             if (xhr.readyState === XMLHttpRequest.DONE) {
                 if (xhr.status === 200) {
-                    //updateUI(itemName, xhr.responseText);
+                    // Success idk
                 } else {
                     console.error('Error:', xhr.status);
                 }
