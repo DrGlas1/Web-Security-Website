@@ -11,11 +11,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     //     echo $cart[$itemName]['quantity'];
     // }
     if (array_key_exists($itemName, $inventory)) {
-        // If the item exists in the cart, increase its quantity
         if (array_key_exists($itemName, $cart)) {
             $cart[$itemName]['quantity']++;
             echo $cart[$itemName]['quantity'];
-        } else { // If the item doesn't exist in the cart, add it with quantity 1
+        } else { 
             $cart[$itemName] = ["quantity" => 1, "image_url" => $inventory[$itemName]['image_url']];
             echo $cart[$itemName]['quantity'];
         }
