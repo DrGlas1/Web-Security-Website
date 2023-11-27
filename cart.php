@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $cart[$item]['quantity'] = $quantity;
         } else {
             // Remove the item from the cart if quantity is 0
-            unset($cart[$item]);
+            //unset($cart[$item]);
         }
 
         // Update the cart in the session
