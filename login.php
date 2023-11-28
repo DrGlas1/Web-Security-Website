@@ -21,7 +21,7 @@ function handleLogin($conn, $user, $pwd) {
 		$salt = $result->salt;
 		$authenticated = password_verify($pwd . $salt, $stored_password); //check with salt
 		if ($authenticated) {
-					session_regenerate_id();
+					session_regenerate_id(true);
 					$_SESSION['id'] = $result->id; 
 					echo 'Login successful!';
 			}
