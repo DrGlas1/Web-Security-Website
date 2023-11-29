@@ -10,28 +10,29 @@ if (!isset($_SESSION['csrf_token'])) {
 	$authenticated = false;
 
 	
-function handleLogin($conn, $user, $pwd) {
-	$query = 'SELECT id, password, salt FROM users WHERE username = $1';
-	//$query = 'SELECT id, password FROM users WHERE username = $1';
-	$res = pg_query_params($conn, $query, array($user));
-	$result = pg_fetch_object($res);
 
-	if ($result) {
-		$stored_password = $result->password;
-		$salt = $result->salt;
-		$authenticated = password_verify($pwd . $salt, $stored_password); //check with salt
-		if ($authenticated) {
-					session_regenerate_id(true);
-					$_SESSION['id'] = $result->id; 
-					echo 'Login successful!';
-			}
-			else {
-				echo 'Invalid password!';
-			}
-	}     else {
-		echo 'User not found!';
-	}    
-	return $authenticated;
+function handleLogin($conn, $user, $pwd) {
+	// WARNING: This code is intentionally vulnerable to SQL injection
+    $query = "SELECT id, password, salt FROM users WHERE username = '$user';";
+    $res = pg_query($conn, $query);
+    $result = pg_fetch_object($res);
+
+    if ($result) {
+        $stored_password = $result->password;
+        $salt = $result->salt;
+        $authenticated = password_verify($pwd . $salt, $stored_password); //check with salt
+        if ($authenticated) {
+            session_regenerate_id(true);
+            $_SESSION['id'] = $result->id; 
+            echo 'Login successful!';
+        } else {
+            echo 'Invalid password!';
+        }
+    } else {
+        echo 'User not found!';
+    }
+
+    return $authenticated;
 }
 
 function handleRegistration($conn, $reg_user, $reg_pwd) {
@@ -67,9 +68,8 @@ function handleRegistration($conn, $reg_user, $reg_pwd) {
 			die("CSRF token mismatch");
 	}
 		if($conn) {
-			//This is prot against XSS attacks
-			$user = htmlspecialchars($_POST['user'], ENT_QUOTES, 'UTF-8');
-			$pwd = htmlspecialchars($_POST['pwd'], ENT_QUOTES, 'UTF-8');
+			$user = $_POST['user'];
+			$pwd = $_POST['pwd'];
 
 			$authenticated = handleLogin($conn, $user, $pwd);
 		}
