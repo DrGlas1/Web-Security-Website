@@ -59,7 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 echo '</ul>';
         
-                echo '<button onclick="finishPurchase()">Checkout</button>';
+                echo '<form method="post" action="process_purchase.php">
+                        <label for="password">Enter Password:</label>
+                        <input type="password" name="password" id="password" required>
+                        <button type="submit" name="checkout">Checkout</button>
+                      </form>';
         
                 echo '<button onclick="backToShop()">Back to landing page</button>';
             } else {
@@ -106,10 +110,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
             };
             xhr.send('item=' + encodeURIComponent(item) + '&quantity=' + encodeURIComponent(quantity));
-        }
-
-        function finishPurchase() {
-            alert('Thank you for your purchase!');
         }
 
         function backToShop() {

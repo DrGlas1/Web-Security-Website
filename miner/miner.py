@@ -263,6 +263,20 @@ def generate_ECDSA_keys():
 
     return jsonify(response_data), 200
 
+@node.route('/sign', methods=['POST'])
+def sign_ECDSA_msg():
+    """Sign the message to be sent
+    """
+    # Get timestamp, round it, make it into a string and encode it to bytes
+    data = request.get_json()
+    private_key = data['private_key']
+    message = str(round(time.time()))
+    bmessage = message.encode()
+    sk = ecdsa.SigningKey.from_string(bytes.fromhex(private_key), curve=ecdsa.SECP256k1)
+    signature = base64.b64encode(sk.sign(bmessage))
+    response_data = {'signature': signature.decode(), 'message': message}
+    return jsonify(response_data), 200
+
 
 
 def validate_signature(public_key, signature, message):
