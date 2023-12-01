@@ -1,9 +1,16 @@
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username TEXT,
-    password TEXT
+    password TEXT,
+    salt VARCHAR(44)
 );
-ALTER TABLE users ADD COLUMN salt VARCHAR(44);
+
+CREATE TABLE user_keys (
+    user_id INT PRIMARY KEY,
+    public_key VARCHAR(256) NOT NULL,
+    encrypted_private_key TEXT NOT NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
 
 CREATE EXTENSION pgcrypto;
 
