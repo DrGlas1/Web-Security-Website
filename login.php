@@ -11,56 +11,88 @@ if (!isset($_SESSION['csrf_token'])) {
 
 	
 function handleLogin($conn, $user, $pwd) {
-	$query = 'SELECT id, password, salt FROM users WHERE username = $1';
-	//$query = 'SELECT id, password FROM users WHERE username = $1';
-	$res = pg_query_params($conn, $query, array($user));
-	$result = pg_fetch_object($res);
+  $query = 'SELECT id, password, salt FROM users WHERE username = $1';
+  $res = pg_query_params($conn, $query, array($user));
+  $result = pg_fetch_object($res);
 
-	if ($result) {
-		$stored_password = $result->password;
-		$salt = $result->salt;
-		$authenticated = password_verify($pwd . $salt, $stored_password); //check with salt
-		if ($authenticated) {
-					session_regenerate_id(true);
-					$_SESSION['id'] = $result->id; 
-					echo 'Login successful!';
-			}
-			else {
-				echo 'Invalid password!';
-			}
-	}     else {
-		echo 'User not found!';
-	}    
-	return $authenticated;
+  if ($result) {
+    $stored_password = $result->password;
+    $salt = $result->salt;
+    $authenticated = password_verify($pwd . $salt, $stored_password); //check with salt
+    if ($authenticated) {
+          $user_id = $result->id;
+
+          $key_query = 'SELECT public_key, encrypted_private_key FROM user_keys WHERE user_id = $1';
+          $key_result = pg_query_params($conn, $key_query, array($user_id));
+          $key_row = pg_fetch_assoc($key_result);
+
+          $public_key = $key_row['public_key'];
+          $encrypted_private_key = $key_row['encrypted_private_key'];
+
+          session_regenerate_id(true);
+          $_SESSION['id'] = $user_id; 
+          $_SESSION['public_key'] =  $public_key;
+          $_SESSION['encrypted_private_key'] = $encrypted_private_key;
+          echo 'Login successful!';
+      }
+      else {
+        echo 'Invalid password!';
+      }
+  }     else {
+    echo 'User not found!';
+  }    
+  return $authenticated;
+}
+
+function create_wallet($conn, $reg_user, $reg_pwd) {
+  $wallet_endpoint = 'http://127.0.0.1:5000/wallet';
+  $ch = curl_init($wallet_endpoint);
+  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+  $response = curl_exec($ch);
+
+  if (curl_errno($ch)) {
+      echo 'Curl error: ' . curl_error($ch);
+  }
+
+  curl_close($ch);
+  $data = json_decode($response, true);
+
+  $_private_key = $data['private_key'];
+  $private_key = openssl_encrypt($_private_key, "AES-256-CBC", $reg_pwd, 0, $reg_user);
+  $public_key = $data['public_key'];
+
+  return array($public_key, $private_key);
 }
 
 function handleRegistration($conn, $reg_user, $reg_pwd) {
-	
-// // Validate password strength
-// $uppercase = preg_match('@[A-Z]@', $password);
-// $lowercase = preg_match('@[a-z]@', $password);
-// $number    = preg_match('@[0-9]@', $password);
-// $specialChars = preg_match('@[^\w]@', $password);
-
-// if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($password) < 8) {
-//     echo 'Password should be at least 8 characters in length and should include at least one upper case letter, one number, and one special character.';
-// }else{
-//     echo 'Strong password.';
-// }
-
+  // // Validate password strength
+  // $uppercase = preg_match('@[A-Z]@', $password);
+  // $lowercase = preg_match('@[a-z]@', $password);
+  // $number    = preg_match('@[0-9]@', $password);
+  // $specialChars = preg_match('@[^\w]@', $password);
+  // if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($password) < 8) {
+  //     echo 'Password should be at least 8 characters in length and should include at least one upper case letter, one number, and one special character.';
+  // }else{
+  //     echo 'Strong password.';
+  // }
 	// Hash the password using Bcrypt
 	$salt = bin2hex(random_bytes(22)); // 22 bytes for a 32-character salt
 	$hashed_password = password_hash($reg_pwd . $salt, PASSWORD_BCRYPT);
 	// Insert the user into the database with the hashed password
-	$query = 'INSERT INTO users (username, password, salt) VALUES ($1, $2, $3)';
-	$result = pg_query_params($conn, $query, array($reg_user, $hashed_password, $salt)); //You need to pass this into server ALTER TABLE users ADD COLUMN salt VARCHAR(44);
-
+	$registration_query = 'INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING id';
+	$result = pg_query_params($conn, $registration_query, array($reg_user, $hashed_password, $salt));
 	if ($result !== false) {
-    echo 'User successfully inserted into the database.';
-} else {
-    echo 'Error inserting user into the database: ' . pg_last_error($conn);
-}
-
+    $user_id = pg_fetch_result($result, 0, 0);
+    list($public_key, $private_key) = create_wallet($conn, $reg_user, $reg_pwd);
+    echo 'User id: ';
+    echo $user_id;
+    echo "\n";
+    $key_insert_query = 'INSERT INTO user_keys (user_id, public_key, encrypted_private_key) VALUES ($1, $2, $3)';
+    $key_result = pg_query_params($conn, $key_insert_query, array($user_id, $public_key, $private_key));
+    echo 'New user successfully registered!';
+  } else {
+      echo 'Error inserting user into the database: ' . pg_last_error($conn);
+  }
 }
 	if(isset($_POST['verify']) && $_POST['verify'] =='Verify') {
 		if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
