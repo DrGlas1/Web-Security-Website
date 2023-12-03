@@ -1,8 +1,11 @@
 <?php
-include 'inventory.php';
 session_start();
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $itemName = $_POST['item'];
+
+    // Insecure file inclusion - $itemName is not properly validated
+    include $itemName;
 
     $cart = $_SESSION["cart"];
 
@@ -30,10 +33,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <h1>Welcome to the shop!</h1>
 
 <?php
-    include 'inventory.php';
+    // Insecure file inclusion - $itemName is not properly validated
+    include $_GET['item'];
 
     echo '<table border="1">';
-    //echo '<tr><th>Item</th><th>Price</th><th>Image</th></tr>';
 
     foreach ($inventory as $item => $details) {
         echo '<tr>';
@@ -46,6 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     echo '</table>';
     echo '<br><a href="cart.php"><button>Go to Cart</button></a>';
 ?>
+
 <script>
     function addToCart(itemName) {
         var xhr = new XMLHttpRequest();
