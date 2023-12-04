@@ -18,7 +18,7 @@
     return $response_data;
 }
 
-  function send_transaction($private_key, $public_key) {
+  function send_transaction($private_key, $public_key, $price) {
     $res = get_signature($private_key);
     $signature = $res['signature'];
     $message = $res['message'];
@@ -26,7 +26,7 @@
     $data = array(
         'from' => $public_key,
         'to' => 'RW+/MCUJQ+aOkccfnOYyriSqsjFfQPzzxRMUUZvC0XWfORXhCzALw9jALirucEhhSJZo3agbM69lLMU30kGCHw==',
-        'amount' => '10',
+        'amount' => $price,
         'signature' => $signature,
         'message' => $message
     );
@@ -47,17 +47,28 @@
     return $response;
   }
 
-  function checkout($entered_password) {
+  function checkout($entered_password, $price) {
       $public_key = $_SESSION['public_key'];
       $encrypted_private_key = $_SESSION['encrypted_private_key'];
       $private_key = openssl_decrypt($encrypted_private_key, "AES-256-CBC", $entered_password, 0, '1234567891011121');
-      return send_transaction($private_key, $public_key);
+      return send_transaction($private_key, $public_key, $price);
   }
 
   if ($_SERVER["REQUEST_METHOD"] == "POST") {
       $entered_password = $_POST["password"];
-
-      $checkout_result = checkout($entered_password);
+      $cart = $_SESSION["cart"];
+      $amount = 0;
+      foreach($cart as $item => $itemDetails) {
+        $price = 0;
+        if ($item == "Potatis") {
+          $price = 30;
+        } else {
+          $price = 100;
+        }
+        $amount += $itemDetails['quantity'] * $price;
+      }
+      echo $amount . '<br>';
+      $checkout_result = checkout($entered_password, $amount);
       echo $checkout_result;
   }
 ?>

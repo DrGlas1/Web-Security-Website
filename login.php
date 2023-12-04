@@ -31,6 +31,7 @@ function handleLogin($conn, $user, $pwd) {
 
           session_regenerate_id(true);
           $_SESSION['id'] = $user_id; 
+          $_SESSION['username'] = $user;
           $_SESSION['public_key'] =  $public_key;
           $_SESSION['encrypted_private_key'] = $encrypted_private_key;
           echo 'Login successful!';
@@ -44,49 +45,70 @@ function handleLogin($conn, $user, $pwd) {
   return $authenticated;
 }
 
-function create_wallet($conn, $reg_user, $reg_pwd) {
-  $wallet_endpoint = 'http://127.0.0.1:5000/wallet';
-  $ch = curl_init($wallet_endpoint);
+function createWallet($conn, $reg_user, $reg_pwd, $url) {
+  $ch = curl_init($url);
   curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
   $response = curl_exec($ch);
 
   if (curl_errno($ch)) {
       echo 'Curl error: ' . curl_error($ch);
   }
-
   curl_close($ch);
   $data = json_decode($response, true);
 
   $_private_key = $data['private_key'];
-  $private_key = openssl_encrypt($_private_key, "AES-256-CBC", $reg_pwd, 0, $reg_user);
+  $private_key = openssl_encrypt($_private_key, "AES-256-CBC", $reg_pwd, 0, '1234567891011121');
   $public_key = $data['public_key'];
 
   return array($public_key, $private_key);
 }
 
-function handleRegistration($conn, $reg_user, $reg_pwd) {
-  // // Validate password strength
+function isEndpointAccessible($url) {
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5); // Set a timeout in seconds
+
+    $response = curl_exec($ch);
+    $httpStatusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+
+    curl_close($ch);
+    return $httpStatusCode === 200;
+}
+
+function isPasswordCommon($password) {
+    $commonPasswords = file("2k-most-common.txt", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    return in_array($password, $commonPasswords);
+}
+
+function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
+  // Validate password strength
   // $uppercase = preg_match('@[A-Z]@', $password);
   // $lowercase = preg_match('@[a-z]@', $password);
   // $number    = preg_match('@[0-9]@', $password);
   // $specialChars = preg_match('@[^\w]@', $password);
   // if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($password) < 8) {
   //     echo 'Password should be at least 8 characters in length and should include at least one upper case letter, one number, and one special character.';
-  // }else{
-  //     echo 'Strong password.';
+  //     return;
   // }
-	// Hash the password using Bcrypt
+  $wallet_endpoint = 'http://127.0.0.1:5000/wallet';
+
+  if (!isEndpointAccessible($wallet_endpoint)) {
+    echo 'Blockchain server down, registration unsuccesfull';
+    return;
+  }
+  
+  if (isPasswordCommon($reg_pwd)) {
+    echo "Cannot use $reg_pwd, choose another password";
+    return;
+  }
 	$salt = bin2hex(random_bytes(22)); // 22 bytes for a 32-character salt
 	$hashed_password = password_hash($reg_pwd . $salt, PASSWORD_BCRYPT);
 	// Insert the user into the database with the hashed password
-	$registration_query = 'INSERT INTO users (username, password, salt) VALUES ($1, $2, $3) RETURNING id';
-	$result = pg_query_params($conn, $registration_query, array($reg_user, $hashed_password, $salt));
+	$registration_query = 'INSERT INTO users (username, password, home_adress, salt) VALUES ($1, $2, $3, $4) RETURNING id';
+	$result = pg_query_params($conn, $registration_query, array($reg_user, $hashed_password, $reg_adress, $salt));
 	if ($result !== false) {
     $user_id = pg_fetch_result($result, 0, 0);
-    list($public_key, $private_key) = create_wallet($conn, $reg_user, $reg_pwd);
-    echo 'User id: ';
-    echo $user_id;
-    echo "\n";
+    list($public_key, $private_key) = createWallet($conn, $reg_user, $reg_pwd, $wallet_endpoint);
     $key_insert_query = 'INSERT INTO user_keys (user_id, public_key, encrypted_private_key) VALUES ($1, $2, $3)';
     $key_result = pg_query_params($conn, $key_insert_query, array($user_id, $public_key, $private_key));
     echo 'New user successfully registered!';
@@ -125,10 +147,12 @@ function handleRegistration($conn, $reg_user, $reg_pwd) {
 		if($conn) {
 			$reg_user = $_POST['reg_user'];
 			$reg_pwd = $_POST['reg_pwd'];
+      $reg_adress = $_POST['reg_adress'];
 			//SQL protection
 			$reg_user = pg_escape_string($reg_user);
 			$reg_pwd = pg_escape_string($reg_pwd);
-			handleRegistration($conn, $reg_user, $reg_pwd);
+      $reg_adress = pg_escape_string($reg_adress);
+			handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress);
 		}
 	}
 	
@@ -148,6 +172,7 @@ function handleRegistration($conn, $reg_user, $reg_pwd) {
 		<form action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
 			Username: <input type="text" name="reg_user" /><br/>
 			Password: <input type="password" name="reg_pwd" /><br/>
+      Home adress: <input type="text" name="reg_adress" /><br/>
 			<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>" />
 			<input type="submit" value="Register" name="register" />
 		</form>

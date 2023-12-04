@@ -286,9 +286,7 @@ def validate_signature(public_key, signature, message):
     """
     public_key = (base64.b64decode(public_key)).hex()
     signature = base64.b64decode(signature)
-    print(public_key, signature)
     vk = ecdsa.VerifyingKey.from_string(bytes.fromhex(public_key), curve=ecdsa.SECP256k1)
-    # Try changing into an if/else statement as except is too broad.
     try:
         result = vk.verify(signature, message.encode())
         print("Signature Validation Result:", result)

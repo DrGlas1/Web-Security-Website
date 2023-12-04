@@ -1,6 +1,7 @@
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     username TEXT,
+    home_adress TEXT,
     password TEXT,
     salt VARCHAR(44)
 );

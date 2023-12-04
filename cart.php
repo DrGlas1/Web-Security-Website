@@ -34,46 +34,46 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <title>Cart</title>
 </head>
     <body>
-    <?php
-      //  session_start(); //Got error with this enabled
+    <?php 
+    $loggedIn = isset($_SESSION['id']) && !empty($_SESSION['id']);
 
-        $loggedIn = isset($_SESSION['id']) && !empty($_SESSION['id']);
+    $cart = $_SESSION["cart"];
 
-        $cart = $_SESSION["cart"];
+    if (!$loggedIn) {
+      header('location:login.php');
+    }
 
-        if ($loggedIn) {
-            if (!empty($cart)) {
-                echo '<h1>Your Shopping Cart:</h1>';
-                echo '<ul>';
-                foreach ($cart as $item => $itemDetails) {
-                    $quantity = $itemDetails['quantity'];
-                    $image_url = $itemDetails['image_url'];
-        
-                    echo '<li id="cart-item-' . $item . '">
-                            <img src="' . $image_url . '" alt="' . $item . '" style="width: 50px; height: 50px;">
-                            ' . $item . ' - Quantity: <span id="quantity-' . $item . '">' . $quantity . '</span>
-                            <button onclick="decreaseQuantity(\'' . $item . '\')">-</button>
-                            <button onclick="increaseQuantity(\'' . $item . '\')">+</button>
-                            <button onclick="removeItem(\'' . $item . '\')">Remove</button>
-                        </li>';
-                }
-                echo '</ul>';
-        
-                echo '<form method="post" action="process_purchase.php">
-                        <label for="password">Enter Password:</label>
-                        <input type="password" name="password" id="password" required>
-                        <button type="submit" name="checkout">Checkout</button>
-                      </form>';
-        
-                echo '<button onclick="backToShop()">Back to landing page</button>';
-            } else {
-                echo '<p>Your cart is empty.</p>';
-            }
-        } else {
-            echo '<p>Access denied. Please sign in to view your cart.</p>';
-        }
-
+    if (!empty($cart)) : 
     ?>
+    <h1>Your Shopping Cart:</h1>
+    <ul>
+        <?php foreach ($cart as $item => $itemDetails) : ?>
+            <?php
+            $quantity = $itemDetails['quantity'];
+            $image_url = $itemDetails['image_url'];
+            ?>
+            <li id="cart-item-<?php echo $item; ?>">
+                <img src="<?php echo $image_url; ?>" alt="<?php echo $item; ?>" style="width: 50px; height: 50px;">
+                <?php echo $item; ?> - Quantity: <span id="quantity-<?php echo $item; ?>"><?php echo $quantity; ?></span>
+                <button onclick="decreaseQuantity('<?php echo $item; ?>')">-</button>
+                <button onclick="increaseQuantity('<?php echo $item; ?>')">+</button>
+                <button onclick="removeItem('<?php echo $item; ?>')">Remove</button>
+            </li>
+        <?php endforeach; ?>
+    </ul>
+
+    <form method="post" action="process_purchase.php">
+        <label for="password">Enter Password:</label>
+        <input type="password" name="password" id="password" required>
+        <button type="submit" name="checkout">Checkout</button>
+    </form>
+
+    <button onclick="backToShop()">Back to shop</button>
+
+<?php else : ?>
+    <p>Your cart is empty.</p>
+    <button onclick="backToShop()">Back to shop</button>
+<?php endif; ?>
     <script>
         function decreaseQuantity(item) {
             var quantityElement = document.getElementById('quantity-' + item);
@@ -113,7 +113,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
 
         function backToShop() {
-            window.location.href = 'landing_page.php';
+            window.location.href = 'shop.php';
         }
     </script>
     
