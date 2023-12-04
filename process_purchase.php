@@ -58,17 +58,31 @@
       $entered_password = $_POST["password"];
       $cart = $_SESSION["cart"];
       $amount = 0;
-      foreach($cart as $item => $itemDetails) {
-        $price = 0;
-        if ($item == "Potatis") {
-          $price = 30;
-        } else {
-          $price = 100;
-        }
+      foreach ($cart as $item => $itemDetails) {
+        $price = ($item == "Potatis") ? 30 : 100;
         $amount += $itemDetails['quantity'] * $price;
-      }
-      echo $amount . '<br>';
-      $checkout_result = checkout($entered_password, $amount);
-      echo $checkout_result;
+    }
+
+    $checkout_result = checkout($entered_password, $amount);
+
+    if ($checkout_result !== false) {
+        echo "<h1>Receipt</h1>";
+        echo "<p>Items purchased:</p>";
+        echo "<ul>";
+        foreach ($cart as $item => $itemDetails) {
+            $subtotal = $itemDetails['quantity'] * $price;
+            echo "<li>{$itemDetails['quantity']} x {$item} - {$subtotal} kr</li>";
+            $itemDetails['quantity'] = 0;
+        }
+        echo "</ul>";
+        echo "<p>Total amount: {$amount} kr</p>";
+        echo "<a href='shop.php'><button>Back to Shop</button></a>";
+
+        // Remove all our goods from cart
+        $_SESSION['cart'] = [];
+    } else {
+        echo "<h1>Error</h1>";
+        echo "<p>There was an error processing your order. Please try again later.</p>";
+    }
   }
 ?>
