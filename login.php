@@ -8,9 +8,50 @@ if (!isset($_SESSION['csrf_token'])) {
 }
 	$conn = pg_connect("host={$dbConfig['host']} port={$dbConfig['port']} dbname={$dbConfig['dbname']} user={$dbConfig['user']} password={$dbConfig['password']}");
 	$authenticated = false;
+	function handleBruteForce($conn, $user) {
 
-	
+    // Check if the user has exceeded the maximum number of attempts
+    $maxAttempts = 5; // Adjust as needed
+    $blockDuration = 300; // 5 minutes
+
+    $query = 'SELECT login_attempts, last_attempt_time FROM users WHERE username = $1';
+    $result = pg_query_params($conn, $query, array($user));
+    $row = pg_fetch_assoc($result);
+
+    if ($row) {
+        $attempts = (int)$row['login_attempts'];
+        $lastAttempt = strtotime($row['last_attempt_time']);
+        $currentTime = time();
+
+        if ($attempts >= $maxAttempts && ($currentTime - $lastAttempt) < $blockDuration) {
+            echo "Too many login attempts. Please try again later.";
+            return false;
+        }
+    }
+
+    // Update or insert the login attempt record
+    $query = 'UPDATE users SET login_attempts = login_attempts + 1, last_attempt_time = CURRENT_TIMESTAMP
+              WHERE username = $1 RETURNING login_attempts';
+    $result = pg_query_params($conn, $query, array($user));
+    $attempts = (int)pg_fetch_result($result, 0, 'login_attempts');
+
+    if (!$attempts) {
+        // The user record might not exist, insert a new record
+        $query = 'INSERT INTO users (username, login_attempts, last_attempt_time)
+                  VALUES ($1, 1, CURRENT_TIMESTAMP)';
+        pg_query_params($conn, $query, array($user));
+    }
+		echo "Login attempts: $attempts";
+
+    return true;
+}
+
+
 function handleLogin($conn, $user, $pwd) {
+	if (!handleBruteForce($conn, $user)) {
+		return false;
+}
+
 	$query = 'SELECT id, password, salt FROM users WHERE username = $1';
 	//$query = 'SELECT id, password FROM users WHERE username = $1';
 	$res = pg_query_params($conn, $query, array($user));
