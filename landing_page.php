@@ -7,6 +7,6 @@
         echo '<br><a href="cart.php"><button>Go to Cart</button></a>';
         echo '<br><a href="logout.php"><button>Log Out</button></a>'; 
     } else {
-        echo "This is the landing page, but no user is authenticated.";
+        header('location:login.php');
     }
 ?>
