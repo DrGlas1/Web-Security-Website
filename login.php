@@ -1,15 +1,19 @@
 <?php
 //Make a config file for you database
-include('dbconfig.php');
+if ($_SERVER['HTTPS'] !== 'on') {
+  $redirect_url = "https://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
+  header("Location: $redirect_url");
+  exit();
+}
+
 session_start();
 //Protects against Cross-Site Request Forgery (CSRF)
 if (!isset($_SESSION['csrf_token'])) {
-	$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
-	$conn = pg_connect("host={$dbConfig['host']} port={$dbConfig['port']} dbname={$dbConfig['dbname']} user={$dbConfig['user']} password={$dbConfig['password']}");
-	$authenticated = false;
+$conn = pg_connect("host={$dbConfig['host']} port={$dbConfig['port']} dbname={$dbConfig['dbname']} user={$dbConfig['user']} password={$dbConfig['password']}");
+$authenticated = false;
 
-	
 function handleLogin($conn, $user, $pwd) {
   $query = 'SELECT id, password, salt FROM users WHERE username = $1';
   $res = pg_query_params($conn, $query, array($user));
