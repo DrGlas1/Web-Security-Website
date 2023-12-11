@@ -7,7 +7,7 @@ session_start();
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
-$conn = pg_connect("host={$dbConfig['host']} port={$dbConfig['port']} dbname={$dbConfig['dbname']} user={$dbConfig['user']} password={$dbConfig['password']}");
+
 $authenticated = false;
 
 if (!isset($_SESSION['csrf_token'])) {
@@ -46,13 +46,13 @@ function handleLogin($conn, $user, $pwd) {
           $_SESSION['username'] = $user;
           $_SESSION['public_key'] =  $public_key;
           $_SESSION['encrypted_private_key'] = $encrypted_private_key;
-          echo 'Login successful!';
+          echo 'Login successful!' . '<br>';
       }
       else {
-        echo 'Invalid password!';
+        echo 'Invalid password!' . '<br>';
       }
   }     else {
-    echo 'User not found!';
+    echo 'User not found!' . '<br>';
   }    
   return $authenticated;
 }
@@ -108,7 +108,7 @@ function handleBruteForce($conn, $user) {
         $currentTime = time();
 
         if ($attempts >= $maxAttempts && ($currentTime - $lastAttempt) < $blockDuration) {
-            echo "Too many login attempts. Please try again later.";
+            echo "Too many login attempts. Please try again later." . '<br>';
             return false;
         }
     }
