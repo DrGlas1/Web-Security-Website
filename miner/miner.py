@@ -108,7 +108,6 @@ def mine(a, blockchain, node_pending_transactions):
             # Once we find a valid proof of work, we know we can mine a block so
             # ...we reward the miner by adding a transaction
             # First we load all pending transactions sent to the node server
-            print(NODE_PENDING_TRANSACTIONS)
             response = requests.get(url = MINER_NODE_URL + '/txion', params = {'update':MINER_ADDRESS})
             if response.status_code == 200 and response.content:
               try:
@@ -140,6 +139,7 @@ def mine(a, blockchain, node_pending_transactions):
               "data": new_block_data,
               "hash": last_block_hash
             }, sort_keys=True) + "\n")
+            print(BLOCKCHAIN)
             a.send(BLOCKCHAIN)
             requests.get(url = MINER_NODE_URL + '/blocks', params = {'update':MINER_ADDRESS})
 
