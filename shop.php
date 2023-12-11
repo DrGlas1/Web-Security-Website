@@ -1,6 +1,12 @@
 <?php
 include 'inventory.php';
 session_start();
+$loggedIn = isset($_SESSION['id']) && !empty($_SESSION['id']);
+
+if (!$loggedIn) {
+  header('location:login.php');
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $itemName = $_POST['item'];
 
@@ -31,7 +37,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
 <?php
     include 'inventory.php';
-
     echo '<table border="1">';
     //echo '<tr><th>Item</th><th>Price</th><th>Image</th></tr>';
 

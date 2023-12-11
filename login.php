@@ -3,14 +3,25 @@
 include('dbconfig.php');
 session_start();
 //Protects against Cross-Site Request Forgery (CSRF)
-if (!isset($_SESSION['csrf_token'])) {
-	$_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-	$conn = pg_connect("host={$dbConfig['host']} port={$dbConfig['port']} dbname={$dbConfig['dbname']} user={$dbConfig['user']} password={$dbConfig['password']}");
-	$authenticated = false;
+$dbHost = "localhost";
+$dbPort = "5432";
+$dbName = "EITF06-project";
+$dbUser = "postgres";
+$dbPassword = "password";
 
-	
+//Protects against Cross-Site Request Forgery (CSRF)
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+    $conn = pg_connect("host={$dbHost} port={$dbPort} dbname={$dbName} user={$dbUser} password={$dbPassword}");
+    $authenticated = false;
+
+
 function handleLogin($conn, $user, $pwd) {
+	if (!handleBruteForce($conn, $user)) {
+		return false;
+	}
+
   $query = 'SELECT id, password, salt FROM users WHERE username = $1';
   $res = pg_query_params($conn, $query, array($user));
   $result = pg_fetch_object($res);
@@ -80,16 +91,37 @@ function isPasswordCommon($password) {
     return in_array($password, $commonPasswords);
 }
 
+function handleBruteForce($conn, $user) {
+
+    // Check if the user has exceeded the maximum number of attempts
+    $maxAttempts = 5; // Adjust as needed
+    $blockDuration = 300; // 5 minutes
+
+    $query = 'SELECT login_attempts, last_attempt_time FROM users WHERE username = $1';
+    $result = pg_query_params($conn, $query, array($user));
+    $row = pg_fetch_assoc($result);
+
+    if ($row) {
+        $attempts = (int)$row['login_attempts'];
+        $lastAttempt = strtotime($row['last_attempt_time']);
+        $currentTime = time();
+
+        if ($attempts >= $maxAttempts && ($currentTime - $lastAttempt) < $blockDuration) {
+            echo "Too many login attempts. Please try again later.";
+            return false;
+        }
+    }
+}
+
 function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
-  // Validate password strength
-  // $uppercase = preg_match('@[A-Z]@', $password);
-  // $lowercase = preg_match('@[a-z]@', $password);
-  // $number    = preg_match('@[0-9]@', $password);
-  // $specialChars = preg_match('@[^\w]@', $password);
-  // if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($password) < 8) {
-  //     echo 'Password should be at least 8 characters in length and should include at least one upper case letter, one number, and one special character.';
-  //     return;
-  // }
+  $uppercase = preg_match('@[A-Z]@', $reg_pwd);
+  $lowercase = preg_match('@[a-z]@', $reg_pwd);
+  $number    = preg_match('@[0-9]@', $reg_pwd);
+  $specialChars = preg_match('@[^\w]@', $reg_pwd);
+  if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($reg_pwd) < 8) {
+      echo 'Password should be at least 8 characters in length and should include at least one upper case letter, one number, and one special character.';
+      return;
+  }
   $wallet_endpoint = 'http://127.0.0.1:5000/wallet';
 
   if (!isEndpointAccessible($wallet_endpoint)) {

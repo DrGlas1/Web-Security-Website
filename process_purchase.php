@@ -63,6 +63,8 @@
         $amount += $itemDetails['quantity'] * $price;
     }
 
+    echo "$amount" . '<br>';
+
     $checkout_result = checkout($entered_password, $amount);
 
     if ($checkout_result !== false) {
