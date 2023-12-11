@@ -4,13 +4,12 @@ include('dbconfig.php');
 
 session_start();
 //Protects against Cross-Site Request Forgery (CSRF)
-$dbHost = "localhost";
-$dbPort = "5432";
-$dbName = "EITF06-project";
-$dbUser = "postgres";
-$dbPassword = "password";
+if (!isset($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+$conn = pg_connect("host={$dbConfig['host']} port={$dbConfig['port']} dbname={$dbConfig['dbname']} user={$dbConfig['user']} password={$dbConfig['password']}");
+$authenticated = false;
 
-//Protects against Cross-Site Request Forgery (CSRF)
 if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -113,6 +112,21 @@ function handleBruteForce($conn, $user) {
             return false;
         }
     }
+    // Update or insert the login attempt record
+    $query = 'UPDATE users SET login_attempts = login_attempts + 1, last_attempt_time = CURRENT_TIMESTAMP
+              WHERE username = $1 RETURNING login_attempts';
+    $result = pg_query_params($conn, $query, array($user));
+    $attempts = (int)pg_fetch_result($result, 0, 'login_attempts');
+
+    if (!$attempts) {
+        // The user record might not exist, insert a new record
+        $query = 'INSERT INTO users (username, login_attempts, last_attempt_time)
+                  VALUES ($1, 1, CURRENT_TIMESTAMP)';
+        pg_query_params($conn, $query, array($user));
+    }
+		echo "Login attempts: $attempts";
+
+    return true;
 }
 
 function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
