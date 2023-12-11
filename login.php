@@ -5,15 +5,11 @@ include('dbconfig.php');
 session_start();
 //Protects against Cross-Site Request Forgery (CSRF)
 if (!isset($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32)); 
 }
 
 $authenticated = false;
 
-if (!isset($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
 	$conn = pg_connect("host={$dbConfig['host']} port={$dbConfig['port']} dbname={$dbConfig['dbname']} user={$dbConfig['user']} password={$dbConfig['password']}");
 	$authenticated = false;
 
@@ -24,7 +20,7 @@ function handleLogin($conn, $user, $pwd) {
 	}
 
   $query = 'SELECT id, password, salt FROM users WHERE username = $1';
-  $res = pg_query_params($conn, $query, array($user));
+  $res = pg_query_params($conn, $query, array($user)); //here it protects against SQL INJ
   $result = pg_fetch_object($res);
 
   if ($result) {
@@ -150,7 +146,7 @@ function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
     return;
   }
 	$salt = bin2hex(random_bytes(22)); // 22 bytes for a 32-character salt
-	$hashed_password = password_hash($reg_pwd . $salt, PASSWORD_BCRYPT);
+	$hashed_password = password_hash($reg_pwd . $salt, PASSWORD_BCRYPT); //creates the password with the salt
 	// Insert the user into the database with the hashed password
 	$registration_query = 'INSERT INTO users (username, password, home_adress, salt) VALUES ($1, $2, $3, $4) RETURNING id';
 	$result = pg_query_params($conn, $registration_query, array($reg_user, $hashed_password, $reg_adress, $salt));
@@ -164,7 +160,7 @@ function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
       echo 'Error inserting user into the database: ' . pg_last_error($conn);
   }
 }
-	if(isset($_POST['verify']) && $_POST['verify'] =='Verify') {
+	if(isset($_POST['verify']) && $_POST['verify'] =='Verify') { //Checks with csrf
 		if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
 			die("CSRF token mismatch");
 	}
@@ -188,7 +184,7 @@ function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
 			header('location:landing_page.php');
 		}
 	} 
-	if(isset($_POST['register']) && $_POST['register'] == 'Register') {
+	if(isset($_POST['register']) && $_POST['register'] == 'Register') { //checks with CSRF
 		if (!hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
 			die("CSRF token mismatch");
 	}
@@ -214,7 +210,8 @@ function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
 		<form action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
 			Username: <input type="text" name="user" /><br/>
 			Password: <input type="password" name="pwd" /><br/>
-			<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>" />
+			<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>" /> 
+      <!--This creates the new token -->
 			<input type="submit" value="Verify" name="verify" />
 		</form>
 		<form action="<?php echo $_SERVER['PHP_SELF'] ?>" method="post">
@@ -222,6 +219,7 @@ function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
 			Password: <input type="password" name="reg_pwd" /><br/>
       Home adress: <input type="text" name="reg_adress" /><br/>
 			<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>" />
+            <!--This creates the new token -->
 			<input type="submit" value="Register" name="register" />
 		</form>
 	</body>

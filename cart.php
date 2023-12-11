@@ -1,5 +1,9 @@
 <?php
 session_start();
+if (!isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+    die("CSRF token mismatch");
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $item = $_POST['item'];
     $quantity = $_POST['quantity'];

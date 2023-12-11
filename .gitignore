@@ -1,1 +1,4 @@
 dbconfig.php
+dbinfo.txt
+.vscode
+miner/__pycache__/

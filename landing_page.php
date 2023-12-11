@@ -1,5 +1,9 @@
 <?php
     session_start();
+    //CRSF check
+    if (!isset($_SESSION['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {
+        die("CSRF token mismatch");
+    }
     if (isset($_SESSION['id'])) {
         $username = $_SESSION['username'];
         echo "This is the landing page, welcome user $username";
