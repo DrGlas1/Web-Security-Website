@@ -12,20 +12,3 @@ CREATE TABLE user_keys (
     encrypted_private_key TEXT NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
-
-CREATE EXTENSION pgcrypto;
-
-CREATE OR REPLACE FUNCTION verify(user_name TEXT, pwd TEXT)
-RETURNS INTEGER AS $$
-DECLARE
-    verified INTEGER;
-BEGIN
-    SELECT 1 INTO verified FROM users
-    WHERE username = user_name
-    AND password = crypt(pwd, password);
-
-    RETURN COALESCE(verified, 0);
-END;
-$$ LANGUAGE plpgsql;
-
-GRANT EXECUTE ON FUNCTION verify(TEXT, TEXT) TO PUBLIC;
