@@ -93,9 +93,6 @@ function handleRegistration($conn, $reg_user, $reg_pwd) {
 		if($conn) {
 			$reg_user = $_POST['reg_user'];
 			$reg_pwd = $_POST['reg_pwd'];
-			//SQL protection
-			$reg_user = pg_escape_string($reg_user);
-			$reg_pwd = pg_escape_string($reg_pwd);
 			handleRegistration($conn, $reg_user, $reg_pwd);
 		}
 	}
