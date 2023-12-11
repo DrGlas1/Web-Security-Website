@@ -1,10 +1,6 @@
 <?php
 //Make a config file for you database
-if ($_SERVER['HTTPS'] !== 'on') {
-  $redirect_url = "https://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI'];
-  header("Location: $redirect_url");
-  exit();
-}
+include('dbconfig.php');
 
 session_start();
 //Protects against Cross-Site Request Forgery (CSRF)
