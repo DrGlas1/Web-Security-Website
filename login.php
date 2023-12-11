@@ -24,6 +24,7 @@ function handleLogin($conn, $user, $pwd) {
         if ($authenticated) {
             session_regenerate_id(true);
             $_SESSION['id'] = $result->id; 
+            $_SESSION['username'] = $user;
             echo 'Login successful!';
         } else {
             echo 'Invalid password!';
