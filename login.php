@@ -9,9 +9,7 @@ if (!isset($_SESSION['csrf_token'])) {
 }
 
 $authenticated = false;
-
-	$authenticated = false;
-
+$conn = pg_connect("host={$dbConfig['host']} port={$dbConfig['port']} dbname={$dbConfig['dbname']} user={$dbConfig['user']} password={$dbConfig['password']}");
 	
 function handleLogin($conn, $user, $pwd) {
 	if (!handleBruteForce($conn, $user)) {
