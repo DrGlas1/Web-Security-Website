@@ -10,7 +10,6 @@ if (!isset($_SESSION['csrf_token'])) {
 
 $authenticated = false;
 
-	$conn = pg_connect("host={$dbConfig['host']} port={$dbConfig['port']} dbname={$dbConfig['dbname']} user={$dbConfig['user']} password={$dbConfig['password']}");
 	$authenticated = false;
 
 	
@@ -30,18 +29,16 @@ function handleLogin($conn, $user, $pwd) {
     if ($authenticated) {
           $user_id = $result->id;
 
-          $key_query = 'SELECT public_key, encrypted_private_key FROM user_keys WHERE user_id = $1';
+          $key_query = 'SELECT public_key FROM user_keys WHERE user_id = $1';
           $key_result = pg_query_params($conn, $key_query, array($user_id));
           $key_row = pg_fetch_assoc($key_result);
 
           $public_key = $key_row['public_key'];
-          $encrypted_private_key = $key_row['encrypted_private_key'];
 
           session_regenerate_id(true);
           $_SESSION['id'] = $user_id; 
           $_SESSION['username'] = $user;
           $_SESSION['public_key'] =  $public_key;
-          $_SESSION['encrypted_private_key'] = $encrypted_private_key;
           echo 'Login successful!' . '<br>';
       }
       else {
@@ -63,12 +60,9 @@ function createWallet($conn, $reg_user, $reg_pwd, $url) {
   }
   curl_close($ch);
   $data = json_decode($response, true);
-
-  $_private_key = $data['private_key'];
-  $private_key = openssl_encrypt($_private_key, "AES-256-CBC", $reg_pwd, 0, '1234567891011121');
   $public_key = $data['public_key'];
 
-  return array($public_key, $private_key);
+  return $public_key;
 }
 
 function isEndpointAccessible($url) {
@@ -152,9 +146,9 @@ function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
 	$result = pg_query_params($conn, $registration_query, array($reg_user, $hashed_password, $reg_adress, $salt));
 	if ($result !== false) {
     $user_id = pg_fetch_result($result, 0, 0);
-    list($public_key, $private_key) = createWallet($conn, $reg_user, $reg_pwd, $wallet_endpoint);
-    $key_insert_query = 'INSERT INTO user_keys (user_id, public_key, encrypted_private_key) VALUES ($1, $2, $3)';
-    $key_result = pg_query_params($conn, $key_insert_query, array($user_id, $public_key, $private_key));
+    $public_key = createWallet($conn, $reg_user, $reg_pwd, $wallet_endpoint);
+    $key_insert_query = 'INSERT INTO user_keys (user_id, public_key) VALUES ($1, $2)';
+    $key_result = pg_query_params($conn, $key_insert_query, array($user_id, $public_key));
     echo 'New user successfully registered!';
   } else {
       echo 'Error inserting user into the database: ' . pg_last_error($conn);

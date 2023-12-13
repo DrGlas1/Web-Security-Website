@@ -67,8 +67,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </ul>
 
     <form method="post" action="process_purchase.php">
-        <label for="password">Enter Password:</label>
-        <input type="password" name="password" id="password" required>
+        <div>Create signature with</div>
+        <div>curl -X POST -H "Content-Type: application/json" -d '{"private_key": "your_private_key_value", "amount": "your_total"}' http://127.0.0.1:5000/sign</div>
+        <label for="password">Enter signature:</label>
+        <input type="enter" name="password" id="password" required>
         <button type="submit" name="checkout">Checkout</button>
     </form>
 
