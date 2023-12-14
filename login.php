@@ -48,33 +48,6 @@ function handleLogin($conn, $user, $pwd) {
   return $authenticated;
 }
 
-function createWallet($conn, $reg_user, $reg_pwd, $url) {
-  $ch = curl_init($url);
-  curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-  $response = curl_exec($ch);
-
-  if (curl_errno($ch)) {
-      echo 'Curl error: ' . curl_error($ch);
-  }
-  curl_close($ch);
-  $data = json_decode($response, true);
-  $public_key = $data['public_key'];
-
-  return $public_key;
-}
-
-function isEndpointAccessible($url) {
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5); // Set a timeout in seconds
-
-    $response = curl_exec($ch);
-    $httpStatusCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-    curl_close($ch);
-    return $httpStatusCode === 200;
-}
-
 function isPasswordCommon($password) {
     $commonPasswords = file("2k-most-common.txt", FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
     return in_array($password, $commonPasswords);
@@ -117,21 +90,15 @@ function handleBruteForce($conn, $user) {
     return true;
 }
 
-function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
-  $uppercase = preg_match('@[A-Z]@', $reg_pwd);
-  $lowercase = preg_match('@[a-z]@', $reg_pwd);
-  $number    = preg_match('@[0-9]@', $reg_pwd);
-  $specialChars = preg_match('@[^\w]@', $reg_pwd);
-  if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($reg_pwd) < 8) {
-      echo 'Password should be at least 8 characters in length and should include at least one upper case letter, one number, and one special character.';
-      return;
-  }
-  $wallet_endpoint = 'http://127.0.0.1:5000/wallet';
-
-  if (!isEndpointAccessible($wallet_endpoint)) {
-    echo 'Blockchain server down, registration unsuccesfull';
-    return;
-  }
+function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress, $public_key) {
+  // $uppercase = preg_match('@[A-Z]@', $reg_pwd);
+  // $lowercase = preg_match('@[a-z]@', $reg_pwd);
+  // $number    = preg_match('@[0-9]@', $reg_pwd);
+  // $specialChars = preg_match('@[^\w]@', $reg_pwd);
+  // if(!$uppercase || !$lowercase || !$number || !$specialChars || strlen($reg_pwd) < 8) {
+  //     echo 'Password should be at least 8 characters in length and should include at least one upper case letter, one number, and one special character.';
+  //     return;
+  // }
   
   if (isPasswordCommon($reg_pwd)) {
     echo "Cannot use $reg_pwd, choose another password";
@@ -144,7 +111,6 @@ function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
 	$result = pg_query_params($conn, $registration_query, array($reg_user, $hashed_password, $reg_adress, $salt));
 	if ($result !== false) {
     $user_id = pg_fetch_result($result, 0, 0);
-    $public_key = createWallet($conn, $reg_user, $reg_pwd, $wallet_endpoint);
     $key_insert_query = 'INSERT INTO user_keys (user_id, public_key) VALUES ($1, $2)';
     $key_result = pg_query_params($conn, $key_insert_query, array($user_id, $public_key));
     echo 'New user successfully registered!';
@@ -184,11 +150,12 @@ function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
 			$reg_user = $_POST['reg_user'];
 			$reg_pwd = $_POST['reg_pwd'];
       $reg_adress = $_POST['reg_adress'];
+      $public_key = $_POST['public_key'];
 			//SQL protection
 			$reg_user = pg_escape_string($reg_user);
 			$reg_pwd = pg_escape_string($reg_pwd);
       $reg_adress = pg_escape_string($reg_adress);
-			handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress);
+			handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress, $public_key);
 		}
 	}
 	
@@ -210,6 +177,7 @@ function handleRegistration($conn, $reg_user, $reg_pwd, $reg_adress) {
 			Username: <input type="text" name="reg_user" /><br/>
 			Password: <input type="password" name="reg_pwd" /><br/>
       Home adress: <input type="text" name="reg_adress" /><br/>
+      Public key: <input type="text" name="public_key" /><br/>
 			<input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>" />
             <!--This creates the new token -->
 			<input type="submit" value="Register" name="register" />

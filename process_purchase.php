@@ -1,15 +1,14 @@
 <?php
   session_start();
   function send_transaction($signature, $public_key, $price) {
-    $signature = $res['signature'];
-    $message = $res['message'];
+    $date = $_SESSION['date'];
     $url = 'http://127.0.0.1:5000/txion';
     $data = array(
         'from' => $public_key,
         'to' => 'RW+/MCUJQ+aOkccfnOYyriSqsjFfQPzzxRMUUZvC0XWfORXhCzALw9jALirucEhhSJZo3agbM69lLMU30kGCHw==',
         'amount' => $price,
         'signature' => $signature,
-        'message' => $message
+        'message' => $price . $date
     );
 
     $json_data = json_encode($data);
@@ -40,13 +39,10 @@
       foreach ($cart as $item => $itemDetails) {
         $price = ($item == "Potatis") ? 30 : 100;
         $amount += $itemDetails['quantity'] * $price;
-    }
-
-    echo "$amount" . '<br>';
+      }
 
     $checkout_result = checkout($signature, $amount);
-
-    if ($checkout_result !== false) {
+    if ((strpos($checkout_result, 'Transaction submission successful') !== false)) {
         echo "<h1>Receipt</h1>";
         echo "<p>Items purchased:</p>";
         echo "<ul>";

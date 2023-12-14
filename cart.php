@@ -1,5 +1,6 @@
 <?php
 session_start();
+$_SESSION['date'] = date('m/d/Y h:i:s a', time());
 if (!isset($_SESSION['csrf_token'])) {
     die("CSRF token mismatch");
 }
@@ -42,12 +43,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $loggedIn = isset($_SESSION['id']) && !empty($_SESSION['id']);
 
     $cart = $_SESSION["cart"];
+    $date = $_SESSION["date"];
 
     if (!$loggedIn) {
       header('location:login.php');
     }
 
+    $amount = 0;
+    foreach ($cart as $item => $itemDetails) {
+      $price = ($item == "Potatis") ? 30 : 100;
+      $amount += $itemDetails['quantity'] * $price;
+    }
     if (!empty($cart)) : 
+    echo '<div>Create signature with</div>' . '<br>';
+    echo "<div>curl -X POST -H \"Content-Type: application/json\" -d '{\"private_key\": \"your_private_key_value\", \"amount\": \"$amount\", \"message\": \"$date\"}' http://127.0.0.1:5000/sign</div>" . '<br>';
     ?>
     <h1>Your Shopping Cart:</h1>
     <ul>
@@ -67,10 +76,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     </ul>
 
     <form method="post" action="process_purchase.php">
-        <div>Create signature with</div>
-        <div>curl -X POST -H "Content-Type: application/json" -d '{"private_key": "your_private_key_value", "amount": "your_total"}' http://127.0.0.1:5000/sign</div>
         <label for="password">Enter signature:</label>
-        <input type="enter" name="password" id="password" required>
+        <input type="text" name="signature" id="signature" required>
         <button type="submit" name="checkout">Checkout</button>
     </form>
 

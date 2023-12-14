@@ -270,7 +270,9 @@ def sign_ECDSA_msg():
     # Get timestamp, round it, make it into a string and encode it to bytes
     data = request.get_json()
     private_key = data['private_key']
-    message = str(round(time.time()))
+    amount = data['amount']
+    date = data['message']
+    message = str(amount) + str(date)
     bmessage = message.encode()
     sk = ecdsa.SigningKey.from_string(bytes.fromhex(private_key), curve=ecdsa.SECP256k1)
     signature = base64.b64encode(sk.sign(bmessage))
@@ -288,7 +290,7 @@ def validate_signature(public_key, signature, message):
     signature = base64.b64decode(signature)
     vk = ecdsa.VerifyingKey.from_string(bytes.fromhex(public_key), curve=ecdsa.SECP256k1)
     try:
-        result = vk.verify(signature, message.encode())
+        result = vk.verify(signature, str(message).encode())
         print("Signature Validation Result:", result)
         return result
     except Exception as e:
